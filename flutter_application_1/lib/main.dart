@@ -1,122 +1,225 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+// Domain
+import 'domain/models/food_entry.dart';
+import 'domain/models/weight_entry.dart';
+import 'domain/repositories/i_meal_repository.dart';
+import 'domain/repositories/i_weight_repository.dart';
+
+// Infrastructure
+import 'infrastructure/repositories/in_memory_meal_repository.dart';
+import 'infrastructure/repositories/in_memory_weight_repository.dart';
+
+// Application
+import 'application/services/nutrition_calculator.dart';
+import 'application/services/date_formatter.dart';
+import 'application/state/nutrition_state.dart';
+import 'application/state/weight_state.dart';
+
+// Presentation
+import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/trends_screen.dart';
+import 'presentation/widgets/navigation/bottom_nav_bar.dart';
+import 'core/theme/app_theme.dart';
+
+/// Minimal main that wires up dependencies and runs the app
 void main() {
-  runApp(const MyApp());
+  // Create services (stateless, can be singletons)
+  final nutritionCalculator = const NutritionCalculator();
+  final dateFormatter = const DateFormatter();
+
+  // Create repositories with sample data (Dependency Inversion - depend on abstractions)
+  final IMealRepository mealRepository = _createMealRepository();
+  final IWeightRepository weightRepository = _createWeightRepository();
+
+  runApp(
+    NutritionTrackerApp(
+      mealRepository: mealRepository,
+      weightRepository: weightRepository,
+      nutritionCalculator: nutritionCalculator,
+      dateFormatter: dateFormatter,
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// Factory method to create meal repository with sample data
+IMealRepository _createMealRepository() {
+  final now = DateTime.now();
+  final dateKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-  // This widget is the root of your application.
+  return InMemoryMealRepository(
+    initialData: {
+      dateKey: [
+        FoodEntry(
+          id: '1',
+          name: 'Oatmeal with Berries',
+          icon: '🥣',
+          protein: 12,
+          carbs: 54,
+          fat: 6,
+        ),
+        FoodEntry(
+          id: '2',
+          name: 'Grilled Chicken Salad',
+          icon: '🥗',
+          protein: 35,
+          carbs: 28,
+          fat: 18,
+        ),
+        FoodEntry(
+          id: '3',
+          name: 'Protein Smoothie',
+          icon: '🥤',
+          protein: 25,
+          carbs: 32,
+          fat: 8,
+        ),
+        FoodEntry(
+          id: '4',
+          name: 'Salmon with Quinoa',
+          icon: '🐟',
+          protein: 38,
+          carbs: 35,
+          fat: 12,
+        ),
+      ],
+    },
+  );
+}
+
+/// Factory method to create weight repository with sample data
+IWeightRepository _createWeightRepository() {
+  final now = DateTime.now();
+
+  String dateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  return InMemoryWeightRepository(
+    initialData: {
+      dateKey(now.subtract(const Duration(days: 30))): WeightEntry(
+        id: '1',
+        date: now.subtract(const Duration(days: 30)),
+        weight: 75.5,
+        bodyFat: 18.5,
+      ),
+      dateKey(now.subtract(const Duration(days: 25))): WeightEntry(
+        id: '2',
+        date: now.subtract(const Duration(days: 25)),
+        weight: 75.2,
+        bodyFat: 18.3,
+      ),
+      dateKey(now.subtract(const Duration(days: 20))): WeightEntry(
+        id: '3',
+        date: now.subtract(const Duration(days: 20)),
+        weight: 74.8,
+        bodyFat: 18.0,
+      ),
+      dateKey(now.subtract(const Duration(days: 15))): WeightEntry(
+        id: '4',
+        date: now.subtract(const Duration(days: 15)),
+        weight: 74.5,
+        bodyFat: 17.8,
+      ),
+      dateKey(now.subtract(const Duration(days: 10))): WeightEntry(
+        id: '5',
+        date: now.subtract(const Duration(days: 10)),
+        weight: 74.2,
+        bodyFat: 17.5,
+      ),
+      dateKey(now.subtract(const Duration(days: 5))): WeightEntry(
+        id: '6',
+        date: now.subtract(const Duration(days: 5)),
+        weight: 73.8,
+        bodyFat: 17.2,
+      ),
+      dateKey(now): WeightEntry(
+        id: '7',
+        date: now,
+        weight: 73.5,
+        bodyFat: 17.0,
+      ),
+    },
+  );
+}
+
+/// Root application widget - wires up providers (Dependency Injection)
+class NutritionTrackerApp extends StatelessWidget {
+  final IMealRepository mealRepository;
+  final IWeightRepository weightRepository;
+  final NutritionCalculator nutritionCalculator;
+  final DateFormatter dateFormatter;
+
+  const NutritionTrackerApp({
+    super.key,
+    required this.mealRepository,
+    required this.weightRepository,
+    required this.nutritionCalculator,
+    required this.dateFormatter,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return MultiProvider(
+      providers: [
+        // Provide state objects that depend on repositories
+        ChangeNotifierProvider(
+          create: (_) => NutritionState(
+            mealRepository: mealRepository,
+            calculator: nutritionCalculator,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => WeightState(weightRepository: weightRepository),
+        ),
+        // Provide services
+        Provider<DateFormatter>.value(value: dateFormatter),
+        Provider<NutritionCalculator>.value(value: nutritionCalculator),
+      ],
+      child: MaterialApp(
+        title: 'Nutrition Tracker',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: const MainNavigator(),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+/// Main navigator widget handling tab navigation
+class MainNavigator extends StatefulWidget {
+  const MainNavigator({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MainNavigator> createState() => _MainNavigatorState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _MainNavigatorState extends State<MainNavigator> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final dateFormatter = Provider.of<DateFormatter>(context, listen: false);
+
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: IndexedStack(
+          index: _currentIndex,
+          children: [
+            HomeScreen(dateFormatter: dateFormatter),
+            const TrendsScreen(),
+            const Center(child: Text('Add Tab')),
+            const Center(child: Text('Recipes Tab')),
+            const Center(child: Text('Profile Tab')),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+      ),
     );
   }
 }
