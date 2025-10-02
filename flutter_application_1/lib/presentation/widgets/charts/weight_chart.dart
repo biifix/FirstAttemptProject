@@ -171,7 +171,7 @@ class WeightChartPainter extends CustomPainter {
       final y = topMargin + chartHeight - (chartHeight * (i / 4));
 
       final textSpan = TextSpan(
-        text: '${weight.toStringAsFixed(1)}',
+        text: weight.toStringAsFixed(1),
         style: textStyle,
       );
       final textPainter = TextPainter(

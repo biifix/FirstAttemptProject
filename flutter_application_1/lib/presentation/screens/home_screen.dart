@@ -5,6 +5,7 @@ import '../../application/services/date_formatter.dart';
 import '../../domain/models/food_entry.dart';
 import '../widgets/charts/macro_donut_chart.dart';
 import '../widgets/cards/food_entry_card.dart';
+import 'calorie_history_screen.dart';
 
 /// Home screen displaying nutrition tracking (Interface Segregation - only depends on what it needs)
 class HomeScreen extends StatelessWidget {
@@ -22,7 +23,7 @@ class HomeScreen extends StatelessWidget {
         return CustomScrollView(
           slivers: [
             _buildAppBar(context, state),
-            _buildChart(state),
+            _buildChart(context, state),
             _buildMealsHeader(context, state),
             _buildMealsList(context, state),
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -65,10 +66,17 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChart(NutritionState state) {
+  Widget _buildChart(BuildContext context, NutritionState state) {
     return SliverToBoxAdapter(
       child: GestureDetector(
-        onTap: () {}, // Edit target calories
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CalorieHistoryScreen(),
+            ),
+          );
+        },
         child: MacroDonutChart(
           protein: state.totalProtein,
           carbs: state.totalCarbs,

@@ -163,6 +163,9 @@ class NutritionTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Provide repositories
+        Provider<IMealRepository>.value(value: mealRepository),
+        Provider<IWeightRepository>.value(value: weightRepository),
         // Provide state objects that depend on repositories
         ChangeNotifierProvider(
           create: (_) => NutritionState(
