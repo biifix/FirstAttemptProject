@@ -11,6 +11,11 @@ class NutritionState extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
   int _targetCalories = 2000;
 
+  // Macro goals in grams
+  int _targetCarbs = 200;
+  int _targetProtein = 150;
+  int _targetFat = 67;
+
   NutritionState({
     required IMealRepository mealRepository,
     required NutritionCalculator calculator,
@@ -20,6 +25,9 @@ class NutritionState extends ChangeNotifier {
   // Getters
   DateTime get selectedDate => _selectedDate;
   int get targetCalories => _targetCalories;
+  int get targetCarbs => _targetCarbs;
+  int get targetProtein => _targetProtein;
+  int get targetFat => _targetFat;
 
   List<FoodEntry> get meals => _mealRepository.getMealsForDate(_selectedDate);
 
@@ -39,6 +47,13 @@ class NutritionState extends ChangeNotifier {
 
   void setTargetCalories(int calories) {
     _targetCalories = calories;
+    notifyListeners();
+  }
+
+  void setMacroGoals(int carbs, int protein, int fat) {
+    _targetCarbs = carbs;
+    _targetProtein = protein;
+    _targetFat = fat;
     notifyListeners();
   }
 

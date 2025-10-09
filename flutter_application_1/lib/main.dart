@@ -58,6 +58,7 @@ IMealRepository _createMealRepository() {
           protein: 12,
           carbs: 54,
           fat: 6,
+          mealType: MealType.breakfast,
         ),
         FoodEntry(
           id: '2',
@@ -66,6 +67,7 @@ IMealRepository _createMealRepository() {
           protein: 35,
           carbs: 28,
           fat: 18,
+          mealType: MealType.lunch,
         ),
         FoodEntry(
           id: '3',
@@ -74,6 +76,7 @@ IMealRepository _createMealRepository() {
           protein: 25,
           carbs: 32,
           fat: 8,
+          mealType: MealType.breakfast,
         ),
         FoodEntry(
           id: '4',
@@ -82,6 +85,7 @@ IMealRepository _createMealRepository() {
           protein: 38,
           carbs: 35,
           fat: 12,
+          mealType: MealType.dinner,
         ),
       ],
     },

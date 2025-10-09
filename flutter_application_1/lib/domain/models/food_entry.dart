@@ -1,3 +1,10 @@
+/// Meal type enum for categorizing food entries
+enum MealType {
+  breakfast,
+  lunch,
+  dinner,
+}
+
 /// Domain model representing a food item with nutritional information
 class FoodEntry {
   final String id;
@@ -6,6 +13,7 @@ class FoodEntry {
   final int protein; // grams
   final int carbs; // grams
   final int fat; // grams
+  final MealType mealType;
 
   const FoodEntry({
     required this.id,
@@ -14,6 +22,7 @@ class FoodEntry {
     required this.protein,
     required this.carbs,
     required this.fat,
+    required this.mealType,
   });
 
   /// Calculate total calories using standard macro-calorie conversions
@@ -26,6 +35,7 @@ class FoodEntry {
     int? protein,
     int? carbs,
     int? fat,
+    MealType? mealType,
   }) {
     return FoodEntry(
       id: id ?? this.id,
@@ -34,6 +44,7 @@ class FoodEntry {
       protein: protein ?? this.protein,
       carbs: carbs ?? this.carbs,
       fat: fat ?? this.fat,
+      mealType: mealType ?? this.mealType,
     );
   }
 }

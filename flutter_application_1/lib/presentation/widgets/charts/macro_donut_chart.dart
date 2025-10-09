@@ -8,6 +8,9 @@ class MacroDonutChart extends StatelessWidget {
   final int fat;
   final int totalCalories;
   final int targetCalories;
+  final int targetCarbs;
+  final int targetProtein;
+  final int targetFat;
 
   const MacroDonutChart({
     super.key,
@@ -16,6 +19,9 @@ class MacroDonutChart extends StatelessWidget {
     required this.fat,
     required this.totalCalories,
     required this.targetCalories,
+    required this.targetCarbs,
+    required this.targetProtein,
+    required this.targetFat,
   });
 
   @override
@@ -69,15 +75,31 @@ class MacroDonutChart extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _MacroLegend(color: const Color(0xFFFF6B6B), label: 'Protein', value: '${protein}g'),
-              const SizedBox(width: 28),
-              _MacroLegend(color: const Color(0xFF4ECDC4), label: 'Carbs', value: '${carbs}g'),
-              const SizedBox(width: 28),
-              _MacroLegend(color: const Color(0xFFFFD93D), label: 'Fat', value: '${fat}g'),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _MacroStatBar(
+                  color: const Color(0xFF4ECDC4),
+                  label: 'Carbs',
+                  current: carbs,
+                  target: targetCarbs,
+                ),
+                _MacroStatBar(
+                  color: const Color(0xFFFF6B6B),
+                  label: 'Protein',
+                  current: protein,
+                  target: targetProtein,
+                ),
+                _MacroStatBar(
+                  color: const Color(0xFFFFD93D),
+                  label: 'Fat',
+                  current: fat,
+                  target: targetFat,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -85,33 +107,55 @@ class MacroDonutChart extends StatelessWidget {
   }
 }
 
-class _MacroLegend extends StatelessWidget {
+class _MacroStatBar extends StatelessWidget {
   final Color color;
   final String label;
-  final String value;
+  final int current;
+  final int target;
 
-  const _MacroLegend({
+  const _MacroStatBar({
     required this.color,
     required this.label,
-    required this.value,
+    required this.current,
+    required this.target,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-            Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          ],
+        const SizedBox(height: 3),
+        Text(
+          '$current / ${target}g',
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 5),
+        SizedBox(
+          height: 3.5,
+          width: 70,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: color.withValues(alpha: 0.2),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
         ),
       ],
     );
@@ -144,11 +188,11 @@ class DonutChartPainter extends CustomPainter {
 
     double startAngle = -math.pi / 2;
 
-    _drawArc(canvas, center, radius, strokeWidth, startAngle, 2 * math.pi * proteinPercent, const Color(0xFFFF6B6B));
-    startAngle += 2 * math.pi * proteinPercent;
-
     _drawArc(canvas, center, radius, strokeWidth, startAngle, 2 * math.pi * carbsPercent, const Color(0xFF4ECDC4));
     startAngle += 2 * math.pi * carbsPercent;
+
+    _drawArc(canvas, center, radius, strokeWidth, startAngle, 2 * math.pi * proteinPercent, const Color(0xFFFF6B6B));
+    startAngle += 2 * math.pi * proteinPercent;
 
     _drawArc(canvas, center, radius, strokeWidth, startAngle, 2 * math.pi * fatPercent, const Color(0xFFFFD93D));
   }
